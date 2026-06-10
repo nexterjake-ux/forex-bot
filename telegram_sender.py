@@ -1,4 +1,4 @@
-import csv
+﻿import csv
 import os
 import requests
 from datetime import datetime
@@ -71,8 +71,8 @@ def send_score_briefing(score_info, gap_percent, gap_amount, premium, event_name
     if portfolio['position'] > 0:
         portfolio_text = (
             f"상태: 보유 중\n"
-            f"매수가: {portfolio['avg_cost']:,.2f}원\n"
-            f"보유량: ${portfolio['position']:,.0f}\n"
+            f"매수가: {portfolio['avg_cost']:,.0f}원 (업비트 USDT)\n"
+            f"보유량: {portfolio['position']:,.0f} USDT\n"
             f"평가금액: {portfolio['equity']:,.0f}원\n"
             f"승률: {portfolio['win_rate']}% (매도 후 계산)"
         )
