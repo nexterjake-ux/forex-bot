@@ -1,4 +1,5 @@
 ﻿import csv
+import json
 import os
 import requests
 from datetime import datetime
@@ -32,7 +33,12 @@ class TelegramSender:
                 'text': text,
                 'parse_mode': 'HTML'
             }
-            response = requests.post(self.api_url, json=payload, timeout=10)
+            response = requests.post(
+                self.api_url,
+                data=json.dumps(payload, ensure_ascii=False).encode('utf-8'),
+                headers={'Content-Type': 'application/json; charset=utf-8'},
+                timeout=10
+            )
             if response.status_code == 200:
                 print("[전송] 텔레그램 메시지 발송 성공")
                 return True
