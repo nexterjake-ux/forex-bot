@@ -28,33 +28,26 @@ from telegram_sender import (
 
 )
 
-from config import (
+from dotenv import load_dotenv
 
-    BRIEFING_TIME,
+load_dotenv()
 
-    CHECK_TIMES,
-
-    EVENT_WARNING_TIME,
-
-    FINAL_REPORT_DATE,
-
-    FINAL_REPORT_TIME,
-
-    TIMEZONE,
-
-    DATA_ARCHIVE_FILE,
-
-    PAPER_TRADING_FILE,
-
-    SIMULATION_START,
-
-    SIMULATION_END,
-
-    STARTING_SEED,
-
-    CALENDAR_EVENTS,
-
-)
+BRIEFING_TIME = os.environ.get("BRIEFING_TIME", "08:50")
+CHECK_TIMES = os.environ.get("CHECK_TIMES", "09:00,13:00,14:50").split(",")
+EVENT_WARNING_TIME = os.environ.get("EVENT_WARNING_TIME", "20:00")
+FINAL_REPORT_DATE = os.environ.get("FINAL_REPORT_DATE", "2026-07-05")
+FINAL_REPORT_TIME = os.environ.get("FINAL_REPORT_TIME", "23:59")
+TIMEZONE = os.environ.get("TIMEZONE", "Asia/Seoul")
+DATA_ARCHIVE_FILE = os.environ.get("DATA_ARCHIVE_FILE", "usd_krw_history.csv")
+PAPER_TRADING_FILE = os.environ.get("PAPER_TRADING_FILE", "paper_trading.csv")
+SIMULATION_START = os.environ.get("SIMULATION_START", "2026-06-10")
+SIMULATION_END = os.environ.get("SIMULATION_END", "2026-07-05")
+STARTING_SEED = int(os.environ.get("STARTING_SEED", "10000000"))
+CALENDAR_EVENTS = {
+    "2026-06-11": ["FOMC"],
+    "2026-06-12": ["CPI"],
+    "2026-07-03": ["NFP"],
+}
 
 
 

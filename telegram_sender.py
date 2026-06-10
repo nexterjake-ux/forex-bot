@@ -3,7 +3,15 @@ import os
 import requests
 from datetime import datetime
 import pytz
-from config import BOT_TOKEN, CHAT_ID, TIMEZONE, DATA_ARCHIVE_FILE, STARTING_SEED
+from dotenv import load_dotenv
+
+load_dotenv()
+
+BOT_TOKEN = os.environ.get("BOT_TOKEN", "여기에입력")
+CHAT_ID = os.environ.get("CHAT_ID", "여기에입력")
+TIMEZONE = os.environ.get("TIMEZONE", "Asia/Seoul")
+DATA_ARCHIVE_FILE = os.environ.get("DATA_ARCHIVE_FILE", "usd_krw_history.csv")
+STARTING_SEED = int(os.environ.get("STARTING_SEED", "10000000"))
 
 
 class TelegramSender:
