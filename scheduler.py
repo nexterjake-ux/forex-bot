@@ -492,6 +492,20 @@ class ForexScheduler:
 
         portfolio_summary = self.portfolio.stats(trade_price if trade_price else 0)
 
+        sell_score = 0
+
+        if b_pattern_count >= 2:
+
+            sell_score += 40
+
+        if gap_percent is not None and gap_percent > 0:
+
+            sell_score += 30
+
+        if premium is not None and premium > 0:
+
+            sell_score += 30
+
         send_afternoon_check(
 
             score_info=score,
@@ -504,11 +518,13 @@ class ForexScheduler:
 
             portfolio=portfolio_summary,
 
+            sell_score=sell_score,
+
             market_summary=market_summary,
 
         )
 
-        if score['action'] == '매도 검토' or (gap_percent is not None and gap_percent > 0.5):
+        if sell_score >= 70:
 
             if self.is_simulation_active() and self.portfolio.sell(trade_price):
 

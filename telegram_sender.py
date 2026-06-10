@@ -163,8 +163,9 @@ def send_final_report(portfolio, history, market_summary=None):
     TelegramSender().send_message(message)
 
 
-def send_afternoon_check(score_info, gap_percent, b_pattern_count, premium, portfolio, market_summary=None):
-    sell_judgment = '매도 실행' if score_info['action'] == '매도 검토' or (gap_percent is not None and gap_percent > 0.5) else '홀딩 유지'
+def send_afternoon_check(score_info, gap_percent, b_pattern_count, premium, portfolio, sell_score=0, market_summary=None):
+    sell_judgment = '매도 실행' if sell_score >= 70 else '홀딩 유지'
+    next_action = '익일 9시 매도 실행' if sell_score >= 70 else '홀딩 유지, 내일 재확인'
     b_label = f'연속 {b_pattern_count}일 ⚠️' if b_pattern_count >= 2 else '없음'
     if gap_percent is not None:
         gap_label = f'양수 ({gap_percent:+.2f}%) ⚠️' if gap_percent > 0 else f'음수 ({gap_percent:+.2f}%)'
@@ -177,7 +178,7 @@ def send_afternoon_check(score_info, gap_percent, b_pattern_count, premium, port
     header = f"{market_summary}\n" if market_summary else ''
     message = f"""{header}<b>🕒 14:50 매도 타이밍 체크</b>
 
-매도 점수: {score_info['score']}점 ({sell_judgment})
+매도 점수: {sell_score}점 ({sell_judgment})
 ━━━━━━━━━━━━━━
 <b>매도 근거</b>
 - B패턴: {b_label}
@@ -190,7 +191,7 @@ def send_afternoon_check(score_info, gap_percent, b_pattern_count, premium, port
 보유량: {portfolio['position']:,.0f} USDT
 평가금액: {portfolio['equity']:,.0f}원
 ━━━━━━━━━━━━━━
-<b>🎯 다음 액션: {score_info['next_action']}</b>
+<b>🎯 다음 액션: {next_action}</b>
 
 <i>{datetime.now(pytz.timezone(TIMEZONE)).strftime('%Y-%m-%d %H:%M:%S')}</i>""".strip()
     TelegramSender().send_message(message)
