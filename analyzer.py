@@ -164,6 +164,28 @@ class ForexAnalyzer:
             print(f"B패턴 계산 실패: {e}")
             return 0
 
+    def get_ndf_positive_streak(self, days=3):
+        """NDF 갭 플러스가 지정 일수 연속인지 확인"""
+        try:
+            data = self.fetch_yahoo_history(days + 4)
+            if data is None or data.empty:
+                return False
+            daily = self._normalize_daily_history(data)
+            valid = daily.dropna(subset=['open', 'close'])
+            if len(valid) < days + 1:
+                return False
+            gaps = []
+            for i in range(1, len(valid)):
+                prev_close = valid['close'].iloc[i-1]
+                today_open = valid['open'].iloc[i]
+                if prev_close == 0 or today_open is None:
+                    continue
+                gaps.append(((today_open - prev_close) / prev_close) * 100)
+            return len(gaps) >= days and all(g > 0 for g in gaps[-days:])
+        except Exception as e:
+            print(f"NDF 연속 갭 계산 실패: {e}")
+            return False
+
     def fetch_upbit_premium(self, usd_krw):
         """업비트 KRW-USDT 가격으로 역프/김프 계산"""
         try:

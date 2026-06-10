@@ -494,15 +494,29 @@ class ForexScheduler:
 
         sell_score = 0
 
+        if trade_price and portfolio_summary['avg_cost'] > 0:
+
+            price_gain = (trade_price - portfolio_summary['avg_cost']) / portfolio_summary['avg_cost'] * 100
+
+            if price_gain >= 1.0:
+
+                sell_score += 30
+
+        if premium is not None and -0.5 < premium < 0:
+
+            sell_score += 20
+
+        if premium is not None and premium >= 0:
+
+            sell_score += 30
+
         if b_pattern_count >= 2:
 
             sell_score += 40
 
-        if gap_percent is not None and gap_percent > 0:
+        ndf_streak = self.analyzer.get_ndf_positive_streak(3)
 
-            sell_score += 30
-
-        if premium is not None and premium > 0:
+        if ndf_streak:
 
             sell_score += 30
 
@@ -519,6 +533,10 @@ class ForexScheduler:
             portfolio=portfolio_summary,
 
             sell_score=sell_score,
+
+            trade_price=trade_price,
+
+            ndf_streak=ndf_streak,
 
             market_summary=market_summary,
 

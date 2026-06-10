@@ -163,33 +163,56 @@ def send_final_report(portfolio, history, market_summary=None):
     TelegramSender().send_message(message)
 
 
-def send_afternoon_check(score_info, gap_percent, b_pattern_count, premium, portfolio, sell_score=0, market_summary=None):
-    sell_judgment = '매도 실행' if sell_score >= 70 else '홀딩 유지'
-    next_action = '익일 9시 매도 실행' if sell_score >= 70 else '홀딩 유지, 내일 재확인'
-    b_label = f'연속 {b_pattern_count}일 ⚠️' if b_pattern_count >= 2 else '없음'
-    if gap_percent is not None:
-        gap_label = f'양수 ({gap_percent:+.2f}%) ⚠️' if gap_percent > 0 else f'음수 ({gap_percent:+.2f}%)'
+def send_afternoon_check(score_info, gap_percent, b_pattern_count, premium, portfolio, sell_score=0, trade_price=None, ndf_streak=False, market_summary=None):
+    if sell_score >= 90:
+        grade = '강력 매도 (즉시 실행)'
+        next_action = '즉시 매도 실행'
+    elif sell_score >= 70:
+        grade = '매도 추천 (익일 9시 매도)'
+        next_action = '익일 9시 매도 실행'
+    elif sell_score >= 50:
+        grade = '매도 보류 (재확인 필요)'
+        next_action = '매도 보류, 내일 재확인'
+    elif sell_score >= 30:
+        grade = '매도 비추천 (홀딩 유지)'
+        next_action = '홀딩 유지'
     else:
-        gap_label = 'N/A'
+        grade = '홀딩 (시그널 없음)'
+        next_action = '홀딩 유지, 시그널 없음'
+
+    b_label = f'연속 {b_pattern_count}일 ⚠️' if b_pattern_count >= 2 else '없음'
+    ndf_label = '3일 연속 플러스 ⚠️' if ndf_streak else ('플러스' if gap_percent is not None and gap_percent > 0 else '마이너스' if gap_percent is not None else 'N/A')
     if premium is not None:
-        premium_label = f'김프 ({premium:+.2f}%) ⚠️' if premium > 0 else f'역프 ({premium:+.2f}%)'
+        premium_label = f'김프 ({premium:+.2f}%) ⚠️' if premium >= 0 else f'역프 ({premium:+.2f}%)'
     else:
         premium_label = 'N/A'
+
+    avg_cost = portfolio.get('avg_cost', 0)
+    cur = trade_price if trade_price else (portfolio['equity'] / portfolio['position'] if portfolio.get('position', 0) > 0 else 0)
+    if avg_cost > 0 and cur > 0:
+        profit_pct = (cur - avg_cost) / avg_cost * 100
+        profit_label = f"{profit_pct:+.2f}% (매수가 {avg_cost:,.0f}원 → 현재 {cur:,.0f}원)"
+    else:
+        profit_label = 'N/A'
+
     header = f"{market_summary}\n" if market_summary else ''
     message = f"""{header}<b>🕒 14:50 매도 타이밍 체크</b>
 
-매도 점수: {sell_score}점 ({sell_judgment})
+매도 점수: {sell_score}점 — {grade}
 ━━━━━━━━━━━━━━
 <b>매도 근거</b>
+- 수익률 +1% 이상: {'예 ⚠️' if avg_cost > 0 and cur > 0 and (cur - avg_cost) / avg_cost * 100 >= 1 else '아니오'}
+- 역프 축소 (-0.5%~0%): {'예 ⚠️' if premium is not None and -0.5 < premium < 0 else '아니오'}
+- 김프 전환 (≥0%): {'예 ⚠️' if premium is not None and premium >= 0 else '아니오'}
 - B패턴: {b_label}
-- NDF 갭: {gap_label}
-- 김프/역프: {premium_label}
+- NDF 갭: {ndf_label}
 ━━━━━━━━━━━━━━
 <b>📊 가상 포트폴리오</b>
 상태: 보유 중
-매수가: {portfolio['avg_cost']:,.0f}원 (업비트 USDT)
+매수가: {avg_cost:,.0f}원 (업비트 USDT)
 보유량: {portfolio['position']:,.0f} USDT
 평가금액: {portfolio['equity']:,.0f}원
+현재 수익률: {profit_label}
 ━━━━━━━━━━━━━━
 <b>🎯 다음 액션: {next_action}</b>
 
