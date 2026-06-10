@@ -5,4 +5,5 @@ __pycache__/
 paper_trading.csv
 usd_krw_history.csv
 config.py
-_patch.py
+_*.py
+.env
