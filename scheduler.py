@@ -18,6 +18,8 @@ from telegram_sender import (
 
     send_score_briefing,
 
+    send_afternoon_check,
+
     send_alert,
 
     send_weekly_report,
@@ -468,41 +470,49 @@ class ForexScheduler:
 
         print("[14:50] 매도 타이밍 체크...")
 
-        if self.portfolio.position > 0:
+        if self.portfolio.position <= 0:
 
-            usd_krw = self.analyzer.get_latest_price()
+            return
 
-            gap_info = self.analyzer.calculate_ndf_gap()
+        usd_krw = self.analyzer.get_latest_price()
 
-            gap_percent = gap_info['percent'] if gap_info else None
+        gap_info = self.analyzer.calculate_ndf_gap()
 
-            gap_amount = gap_info['amount'] if gap_info else None
+        gap_percent = gap_info['percent'] if gap_info else None
 
-            upbit_price, premium = self.analyzer.fetch_upbit_price_and_premium(usd_krw) if usd_krw else (None, None)
+        upbit_price, premium = self.analyzer.fetch_upbit_price_and_premium(usd_krw) if usd_krw else (None, None)
 
-            trade_price = upbit_price if upbit_price else usd_krw
+        trade_price = upbit_price if upbit_price else usd_krw
 
-            score = self.analyzer.score_trade(gap_percent, premium, bool(self.get_event_name(self._today())), b_pattern_count=self.analyzer.get_b_pattern_count())
+        b_pattern_count = self.analyzer.get_b_pattern_count()
 
-            if score['action'] == '매도 검토' or (gap_percent is not None and gap_percent > 0.5):
+        score = self.analyzer.score_trade(gap_percent, premium, bool(self.get_event_name(self._today())), b_pattern_count=b_pattern_count)
 
-                market_summary = build_market_summary(usd_krw, upbit_price, premium)
+        market_summary = build_market_summary(usd_krw, upbit_price, premium)
 
-                send_alert(
+        portfolio_summary = self.portfolio.stats(trade_price if trade_price else 0)
 
-                    title="14:50 매도 타이밍",
+        send_afternoon_check(
 
-                    content="매도 검토 신호가 발생했습니다. 포지션을 정리하세요.",
+            score_info=score,
 
-                    action="매도",
+            gap_percent=gap_percent,
 
-                    market_summary=market_summary
+            b_pattern_count=b_pattern_count,
 
-                )
+            premium=premium,
 
-                if self.is_simulation_active() and self.portfolio.sell(trade_price):
+            portfolio=portfolio_summary,
 
-                    print('[페이퍼] 매도 기록됨')
+            market_summary=market_summary,
+
+        )
+
+        if score['action'] == '매도 검토' or (gap_percent is not None and gap_percent > 0.5):
+
+            if self.is_simulation_active() and self.portfolio.sell(trade_price):
+
+                print('[페이퍼] 매도 기록됨')
 
 
 

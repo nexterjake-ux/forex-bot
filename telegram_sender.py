@@ -163,6 +163,39 @@ def send_final_report(portfolio, history, market_summary=None):
     TelegramSender().send_message(message)
 
 
+def send_afternoon_check(score_info, gap_percent, b_pattern_count, premium, portfolio, market_summary=None):
+    sell_judgment = '매도 실행' if score_info['action'] == '매도 검토' or (gap_percent is not None and gap_percent > 0.5) else '홀딩 유지'
+    b_label = f'연속 {b_pattern_count}일 ⚠️' if b_pattern_count >= 2 else '없음'
+    if gap_percent is not None:
+        gap_label = f'양수 ({gap_percent:+.2f}%) ⚠️' if gap_percent > 0 else f'음수 ({gap_percent:+.2f}%)'
+    else:
+        gap_label = 'N/A'
+    if premium is not None:
+        premium_label = f'김프 ({premium:+.2f}%) ⚠️' if premium > 0 else f'역프 ({premium:+.2f}%)'
+    else:
+        premium_label = 'N/A'
+    header = f"{market_summary}\n" if market_summary else ''
+    message = f"""{header}<b>🕒 14:50 매도 타이밍 체크</b>
+
+매도 점수: {score_info['score']}점 ({sell_judgment})
+━━━━━━━━━━━━━━
+<b>매도 근거</b>
+- B패턴: {b_label}
+- NDF 갭: {gap_label}
+- 김프/역프: {premium_label}
+━━━━━━━━━━━━━━
+<b>📊 가상 포트폴리오</b>
+상태: 보유 중
+매수가: {portfolio['avg_cost']:,.0f}원 (업비트 USDT)
+보유량: {portfolio['position']:,.0f} USDT
+평가금액: {portfolio['equity']:,.0f}원
+━━━━━━━━━━━━━━
+<b>🎯 다음 액션: {score_info['next_action']}</b>
+
+<i>{datetime.now(pytz.timezone(TIMEZONE)).strftime('%Y-%m-%d %H:%M:%S')}</i>""".strip()
+    TelegramSender().send_message(message)
+
+
 def send_alert(title, content, action, market_summary=None):
     emoji_map = {
         '매수': '🟢',
