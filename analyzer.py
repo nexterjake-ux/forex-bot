@@ -1,16 +1,18 @@
-﻿import requests
+﻿import os
+import requests
 import pandas as pd
 import yfinance as yf
 from datetime import datetime, timedelta
 import pytz
-from config import (
-    NEGATIVE_GAP_THRESHOLD,
-    NEUTRAL_UPPER_THRESHOLD,
-    TIMEZONE,
-    CURRENCY_PAIR,
-    UPBIT_TICKER_URL,
-    CALENDAR_EVENTS,
-)
+
+TIMEZONE = os.environ.get("TIMEZONE", "Asia/Seoul")
+CURRENCY_PAIR = os.environ.get("CURRENCY_PAIR", "USDKRW=X")
+UPBIT_TICKER_URL = "https://api.upbit.com/v1/ticker?markets=KRW-USDT"
+CALENDAR_EVENTS = {
+    "2026-06-11": ["FOMC"],
+    "2026-06-12": ["CPI"],
+    "2026-07-03": ["NFP"],
+}
 
 class ForexAnalyzer:
     def __init__(self):
