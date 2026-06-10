@@ -1,0 +1,35 @@
+name: USD/KRW 환율 알람
+
+on:
+  schedule:
+    - cron: '50 23 * * *'  # 08:50 KST (UTC+9 = 전날 23:50 UTC)
+  workflow_dispatch:        # GitHub Actions 탭에서 수동 실행 가능
+
+jobs:
+  daily-briefing:
+    runs-on: ubuntu-latest
+
+    env:
+      BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+      CHAT_ID: ${{ secrets.CHAT_ID }}
+
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: Python 3.11 설정
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: 패키지 설치
+        run: pip install -r requirements.txt
+
+      - name: 일일 브리핑 실행 (08:50 KST)
+        run: |
+          python - <<'EOF'
+          from scheduler import ForexScheduler
+          scheduler = ForexScheduler()
+          scheduler.daily_briefing()
+          EOF

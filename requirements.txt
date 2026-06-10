@@ -1,0 +1,16 @@
+﻿# Web Data Fetching
+yfinance==0.2.36
+requests==2.31.0
+
+# Data Processing
+pandas==2.0.3
+numpy==1.24.3
+
+# Scheduling
+schedule==1.2.0
+
+# Timezone
+pytz==2023.3
+
+# Utilities
+python-dotenv==1.0.0

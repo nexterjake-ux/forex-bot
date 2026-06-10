@@ -1,0 +1,186 @@
+import csv
+import os
+import requests
+from datetime import datetime
+import pytz
+from config import BOT_TOKEN, CHAT_ID, TIMEZONE, DATA_ARCHIVE_FILE, STARTING_SEED
+
+
+class TelegramSender:
+    def __init__(self):
+        self.bot_token = BOT_TOKEN
+        self.chat_id = CHAT_ID
+        self.api_url = f"https://api.telegram.org/bot{self.bot_token}/sendMessage"
+        self.tz = pytz.timezone(TIMEZONE)
+
+    def send_message(self, text):
+        if self.bot_token == "여기에입력" or self.chat_id == "여기에입력":
+            print("[경고] BOT_TOKEN 또는 CHAT_ID가 설정되지 않았습니다.")
+            print(f"메시지:\n{text}")
+            return False
+        try:
+            payload = {
+                'chat_id': self.chat_id,
+                'text': text,
+                'parse_mode': 'HTML'
+            }
+            response = requests.post(self.api_url, json=payload, timeout=10)
+            if response.status_code == 200:
+                print("[전송] 텔레그램 메시지 발송 성공")
+                return True
+            print(f"[실패] 텔레그램 발송 실패: {response.status_code}")
+            return False
+        except Exception as e:
+            print(f"[오류] 메시지 발송 중 오류 발생: {e}")
+            return False
+
+    def archive_data(self, row):
+        file_exists = os.path.exists(DATA_ARCHIVE_FILE)
+        with open(DATA_ARCHIVE_FILE, 'a', newline='', encoding='utf-8-sig') as f:
+            writer = csv.DictWriter(f, fieldnames=list(row.keys()))
+            if not file_exists:
+                writer.writeheader()
+            writer.writerow(row)
+
+
+def build_market_summary(usd_krw=None, upbit_price=None, premium=None):
+    usd_label = 'N/A' if usd_krw is None else f"{usd_krw:,.0f}원"
+    upbit_label = 'N/A' if upbit_price is None else f"{upbit_price:,.0f}원"
+    premium_label = 'N/A' if premium is None else f"{premium:+.2f}%"
+    return (
+        f'💱 현재 시세\n'
+        f'USD/KRW:      {usd_label}\n'
+        f'업비트 USDT:  {upbit_label}\n'
+        f'역프/김프:    {premium_label}\n'
+        f'━━━━━━━━━━━━━━'
+    )
+
+
+def send_score_briefing(score_info, gap_percent, gap_amount, premium, event_name, portfolio, market_summary=None):
+    score_text = f"{score_info['score']}점 / {score_info['action']}"
+    score_lines = '\n'.join(f"- {item}" for item in score_info['details'])
+    gap_label = 'N/A'
+    if gap_percent is not None and gap_amount is not None:
+        gap_label = f"{gap_amount:+,.2f}원 ({gap_percent:+.2f}%)"
+    elif gap_percent is not None:
+        gap_label = f"{gap_percent:+.2f}%"
+    premium_label = 'N/A'
+    if premium is not None:
+        premium_label = f"{premium:+.2f}%"
+    event_label = event_name if event_name else '없음'
+    if portfolio['position'] > 0:
+        portfolio_text = (
+            f"상태: 보유 중\n"
+            f"매수가: {portfolio['avg_cost']:,.2f}원\n"
+            f"보유량: ${portfolio['position']:,.0f}\n"
+            f"평가금액: {portfolio['equity']:,.0f}원\n"
+            f"승률: {portfolio['win_rate']}% (매도 후 계산)"
+        )
+    else:
+        portfolio_text = (
+            f"상태: 대기 중\n"
+            f"현금: {portfolio['cash']:,.0f}원\n"
+            f"누적손익: {portfolio['realized_profit']:,.0f}원"
+        )
+    header = f"{market_summary}\n\n" if market_summary else ''
+
+    message = f"""
+{header}<b>① 점수 & 판단: {score_text}</b>
+
+<b>② 항목별 점수 내역</b>
+{score_lines}
+
+<b>③ 지표</b>
+- NDF 갭: {gap_label}
+- 역프/김프: {premium_label}
+- 이벤트: {event_label}
+
+<b>④ 가상 포트폴리오 현황</b>
+{portfolio_text}
+
+<b>⑤ 다음 액션</b>
+{score_info['next_action']}
+
+<i>업데이트: {datetime.now(pytz.timezone(TIMEZONE)).strftime('%Y-%m-%d %H:%M:%S')}</i>
+""".strip()
+    sender = TelegramSender()
+    sender.send_message(message)
+
+    archive_row = {
+        '날짜': datetime.now(pytz.timezone(TIMEZONE)).strftime('%Y-%m-%d'),
+        'NDF갭(%)': f"{gap_percent:+.2f}%" if gap_percent is not None else 'N/A',
+        '프리미엄(%)': premium_label,
+        '판단결과': score_info['action'],
+        '점수': score_info['score'],
+        '이벤트': event_label,
+        '현금': f"{portfolio['cash']:,.0f}",
+        '포지션': f"{portfolio['position']:.4f}",
+        '자산가치': f"{portfolio['equity']:,.0f}",
+        '기록시간': datetime.now(pytz.timezone(TIMEZONE)).strftime('%H:%M:%S')
+    }
+    TelegramSender().archive_data(archive_row)
+
+
+def send_weekly_report(portfolio, market_summary=None):
+    header = f"{market_summary}\n\n" if market_summary else ''
+    message = f"""
+{header}<b>주간 리포트</b>
+
+- 현금: {portfolio['cash']:,.0f}원
+- 보유 수량: {portfolio['position']:.4f}
+- 평균 단가: {portfolio['avg_cost']:,.2f}원
+- 자산 가치: {portfolio['equity']:,.0f}원
+- 총 거래: {portfolio['trade_count']}
+- 승률: {portfolio['win_rate']}%
+- 최대 낙폭: {portfolio['max_drawdown']:,.0f}원
+
+<i>주간 점검을 통해 다음 주 전략을 준비하세요.</i>
+""".strip()
+    TelegramSender().send_message(message)
+
+
+def send_final_report(portfolio, history, market_summary=None):
+    total_profit = portfolio['equity'] - STARTING_SEED
+    total_return = (portfolio['equity'] / STARTING_SEED - 1) * 100
+    suggestion = '7월 6일 이후는 시장 변동성에 따라 보수적인 진입과 손절 선 설정이 필요합니다.'
+    header = f"{market_summary}\n\n" if market_summary else ''
+    message = f"""
+{header}<b>최종 리포트</b>
+
+- 최종 시드: {portfolio['equity']:,.0f}원
+- 전체 수익률: {total_return:+.2f}%
+- 승률: {portfolio['win_rate']}%
+- 최대 낙폭: {portfolio['max_drawdown']:,.0f}원
+- 거래 횟수: {portfolio['trade_count']}
+
+<b>전체 거래 내역</b>
+"""
+    for row in history[-5:]:
+        price_val = float(row['price'])
+        pl_val = float(row['profit_loss'])
+        message += f"\n- {row['datetime']} {row['type']} {price_val:,.2f}원 {row['units']}단위 P/L {pl_val:,.0f}원"
+    message += f"\n\n<b>전략 제언</b>\n{suggestion}"
+    TelegramSender().send_message(message)
+
+
+def send_alert(title, content, action, market_summary=None):
+    emoji_map = {
+        '매수': '🟢',
+        '관망': '🟡',
+        '스킵': '⚪',
+        '매도': '🔴',
+        '상승': '📈',
+        '하락': '📉',
+        '확인': 'ℹ️',
+        '경고': '⚠️'
+    }
+    emoji = emoji_map.get(action, '❗')
+    header = f"{market_summary}\n\n" if market_summary else ''
+    message = f"""
+{header}<b>{emoji} {title}</b>
+
+{content}
+
+<i>{datetime.now(pytz.timezone(TIMEZONE)).strftime('%Y-%m-%d %H:%M:%S')}</i>
+""".strip()
+    TelegramSender().send_message(message)
