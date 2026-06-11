@@ -1,0 +1,43 @@
+name: KRW-USDT 알람
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'   # 5분마다 실행
+  workflow_dispatch:         # 수동 실행
+
+jobs:
+  usdt-alarm:
+    runs-on: ubuntu-latest
+
+    env:
+      BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+      CHAT_ID: ${{ secrets.CHAT_ID }}
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v5
+
+      - name: Python 3.11 설정
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: 알람 상태 캐시 복원
+        uses: actions/cache@v4
+        with:
+          path: usdt_state.json
+          key: usdt-state-${{ github.run_id }}
+          restore-keys: |
+            usdt-state-
+
+      - name: 패키지 설치
+        run: pip install -r requirements.txt
+
+      - name: KRW-USDT 체크 실행
+        run: |
+          python - <<'EOF'
+          from usdt_alarm import check
+          check()
+          EOF
