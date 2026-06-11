@@ -1,10 +1,18 @@
 ﻿import csv
+import io
 import json
 import os
+import sys
 import requests
 from datetime import datetime
 import pytz
 from dotenv import load_dotenv
+
+# Force UTF-8 stdout on Windows (cp949) and GitHub Actions Linux
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
+elif hasattr(sys.stdout, 'buffer'):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 
 load_dotenv()
 

@@ -44,9 +44,14 @@ SIMULATION_START = os.environ.get("SIMULATION_START", "2026-06-10")
 SIMULATION_END = os.environ.get("SIMULATION_END", "2026-07-05")
 STARTING_SEED = int(os.environ.get("STARTING_SEED", "10000000"))
 CALENDAR_EVENTS = {
-    "2026-06-11": ["FOMC"],
-    "2026-06-12": ["CPI"],
-    "2026-07-03": ["NFP"],
+    "2026-06-17": ["FOMC"],
+    "2026-07-29": ["FOMC"],
+    "2026-09-16": ["FOMC"],
+    "2026-07-14": ["CPI"],
+    "2026-08-12": ["CPI"],
+    "2026-09-11": ["CPI"],
+    "2026-07-02": ["NFP"],
+    "2026-08-06": ["NFP"],
 }
 
 
@@ -303,19 +308,19 @@ class ForexScheduler:
 
     def schedule_tasks(self):
 
-        schedule.every().day.at(BRIEFING_TIME).do(self.daily_briefing)
+        schedule.every(5).minutes.do(self.daily_briefing)
 
-        schedule.every().day.at(CHECK_TIMES[0]).do(self.morning_check)
+        schedule.every(5).minutes.do(self.morning_check)
 
-        schedule.every().day.at(CHECK_TIMES[1]).do(self.midday_check)
+        schedule.every(5).minutes.do(self.midday_check)
 
-        schedule.every().day.at(CHECK_TIMES[2]).do(self.afternoon_check)
+        schedule.every(5).minutes.do(self.afternoon_check)
 
-        schedule.every().day.at(EVENT_WARNING_TIME).do(self.event_warning)
+        schedule.every(5).minutes.do(self.event_warning)
 
-        schedule.every().sunday.at("09:00").do(self.weekly_report)
+        schedule.every(5).minutes.do(self.weekly_report)
 
-        schedule.every().day.at(FINAL_REPORT_TIME).do(self.daily_final_report_check)
+        schedule.every(5).minutes.do(self.daily_final_report_check)
 
         schedule.every(5).minutes.do(self.check_price_alert)
 
