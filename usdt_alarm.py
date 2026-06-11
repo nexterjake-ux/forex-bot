@@ -154,9 +154,9 @@ def calc_sell_score(curr, avg7, avg30, hour, minute, candles):
 def apply_trend_filter(buy_score, sell_score, avg7, avg30):
     diff_pct = (avg7 - avg30) / avg30 * 100
     if diff_pct > 0.1:    # 상승 추세 → 매도 스코어 약화
-        sell_score = int(sell_score * 0.7)
+        sell_score = int(sell_score * 0.85)
     elif diff_pct < -0.1:  # 하락 추세 → 매수 스코어 약화
-        buy_score  = int(buy_score  * 0.7)
+        buy_score  = int(buy_score  * 0.85)
     return buy_score, sell_score
 
 
@@ -271,9 +271,9 @@ def check(force_send=False):
     if abs(trend_pct) <= 0.1:
         trend_str = '횡보'
     elif trend_pct > 0:
-        trend_str = f'상승추세 (+{trend_pct:.2f}%) → 매도 스코어 ×0.7 적용'
+        trend_str = f'상승추세 (+{trend_pct:.2f}%) → 매도 스코어 ×0.85 적용'
     else:
-        trend_str = f'하락추세 ({trend_pct:.2f}%) → 매수 스코어 ×0.7 적용'
+        trend_str = f'하락추세 ({trend_pct:.2f}%) → 매수 스코어 ×0.85 적용'
 
     print(f'  현재가: {curr:,.0f}원')
     print(f'  7일 평균: {avg7:,.0f}원 ({diff7_pct:+.2f}%)  |  30일 평균: {avg30:,.0f}원 ({diff30_pct:+.2f}%)')
