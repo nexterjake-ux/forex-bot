@@ -154,9 +154,9 @@ def calc_sell_score(curr, avg7, avg30, hour, minute, candles):
 def apply_trend_filter(buy_score, sell_score, avg7, avg30):
     diff_pct = (avg7 - avg30) / avg30 * 100
     if diff_pct > 0.1:    # 상승 추세 → 매도 스코어 약화
-        sell_score = int(sell_score * 0.85)
+        sell_score = round(sell_score * 0.85)
     elif diff_pct < -0.1:  # 하락 추세 → 매수 스코어 약화
-        buy_score  = int(buy_score  * 0.85)
+        buy_score  = round(buy_score  * 0.85)
     return buy_score, sell_score
 
 
