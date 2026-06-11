@@ -165,13 +165,14 @@ def apply_trend_filter(buy_score, sell_score, avg7, avg30):
 def build_buy_message(score, curr, avg7, avg30, hour, minute, conds):
     diff7  = (curr - avg7)  / avg7  * 100
     diff30 = (curr - avg30) / avg30 * 100
-    header = '🟢🟢 [강한 매수 신호' if score >= 4 else '🟢 [매수 신호'
+    header   = '🟢🟢 [강한 매수 신호' if score >= 4 else '🟢 [매수 신호'
+    time_str = f'{hour:02d}:{minute:02d} KST (저가 구간)' if '시간대 ✅' in conds else f'{hour:02d}:{minute:02d} KST'
     return (
         f'{header} - {score}점]\n'
         f'현재가: {curr:,.0f}원\n'
         f'7일 평균: {avg7:,.0f}원 ({diff7:+.2f}%)\n'
         f'30일 평균: {avg30:,.0f}원 ({diff30:+.2f}%)\n'
-        f'시간대: {hour:02d}:{minute:02d} KST (저가 구간)\n'
+        f'시간대: {time_str}\n'
         f'조건: {" / ".join(conds)}'
     )
 
@@ -179,13 +180,14 @@ def build_buy_message(score, curr, avg7, avg30, hour, minute, conds):
 def build_sell_message(score, curr, avg7, avg30, hour, minute, conds):
     diff7  = (curr - avg7)  / avg7  * 100
     diff30 = (curr - avg30) / avg30 * 100
-    header = '🔴🔴 [강한 매도 신호' if score >= 4 else '🔴 [매도 신호'
+    header   = '🔴🔴 [강한 매도 신호' if score >= 4 else '🔴 [매도 신호'
+    time_str = f'{hour:02d}:{minute:02d} KST (고가 구간)' if '시간대 ✅' in conds else f'{hour:02d}:{minute:02d} KST'
     return (
         f'{header} - {score}점]\n'
         f'현재가: {curr:,.0f}원\n'
         f'7일 평균: {avg7:,.0f}원 ({diff7:+.2f}%)\n'
         f'30일 평균: {avg30:,.0f}원 ({diff30:+.2f}%)\n'
-        f'시간대: {hour:02d}:{minute:02d} KST (고가 구간)\n'
+        f'시간대: {time_str}\n'
         f'조건: {" / ".join(conds)}'
     )
 
