@@ -154,6 +154,7 @@ def check(force_send=False):
         return
 
     state = load_state()
+    print(f'  [상태] ' + (', '.join(f'{k[:8]}..={v:.4f}%' for k, v in state.items()) or '없음 (초기 실행)'))
 
     for m in MARKETS:
         addr = m['address'].lower()
@@ -178,15 +179,17 @@ def check(force_send=False):
             state[addr] = curr
         else:
             change = curr - prev
-            print(f'  변동: {change:+.4f}%')
+            print(f'  변동: {change:+.4f}% (기준값: {prev:.4f}%)')
             if abs(change) >= 0.1:
                 msg = build_change_message(m, prev, curr)
                 print(f'\n{msg}\n')
                 send_telegram(msg)
-                state[addr] = curr
-            # 0.1% 미만 변동 → 상태만 업데이트, 발송 안 함
+                state[addr] = curr  # 알람 발송 후 기준값 갱신
+            else:
+                print(f'  → 임계값 미달, 기준값 유지')
 
     save_state(state)
+    print(f'  [상태] 저장 완료: {STATE_FILE}')
 
 
 # ── 진입점 ───────────────────────────────────────────────────────────────────

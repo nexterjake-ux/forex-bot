@@ -5,6 +5,9 @@ on:
     - cron: '*/5 * * * *'   # 5분마다 실행
   workflow_dispatch:         # 수동 실행
 
+permissions:
+  contents: write            # 상태 파일 git 커밋용
+
 jobs:
   pendle-alarm:
     runs-on: ubuntu-latest
@@ -24,14 +27,6 @@ jobs:
           python-version: '3.11'
           cache: 'pip'
 
-      - name: APY 상태 캐시 복원
-        uses: actions/cache@v4
-        with:
-          path: pendle_state.json
-          key: pendle-state-${{ github.run_id }}
-          restore-keys: |
-            pendle-state-
-
       - name: 패키지 설치
         run: pip install -r requirements.txt
 
@@ -41,3 +36,14 @@ jobs:
           from pendle_alarm import check
           check()
           EOF
+
+      - name: 상태 파일 커밋
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add pendle_state.json
+          git diff --staged --quiet || (
+            git commit -m "chore: update pendle_state" &&
+            git pull --rebase origin main &&
+            git push
+          ) || echo "[경고] 상태 파일 push 실패 (동시 실행 충돌 가능)"
