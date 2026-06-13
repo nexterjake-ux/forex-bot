@@ -35,12 +35,12 @@ MARKETS = [
 
 def get_grade(apy, median):
     diff = apy - median
-    if diff <= -0.6:     return '🔴 매도 검토'  # 중앙값 - 0.6% 이하
-    if diff >   1.2:     return '🟢🟢🟢 매수 강추'
-    if diff >   0.8:     return '🟢🟢 매수 추천'
-    if diff >   0.4:     return '🟢 매수 고려'
-    if diff >= -0.4:     return '⚪ 관망'
-    return                      '🟠 관망'       # -0.6% ~ -0.4% 사이
+    if diff >=  1.2:  return '🟢🟢🟢 매수 강추'
+    if diff >=  0.8:  return '🟢🟢 매수 추천'
+    if diff >=  0.4:  return '🟢 매수 고려'
+    if diff >= -0.4:  return '⚪ 관망'
+    if diff >  -0.6:  return '🟠 매도 근접'
+    return                   '🔴 매도 검토'
 
 
 # ── 데이터 수집 ───────────────────────────────────────────────────────────────
